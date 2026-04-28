@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Love Boss RPG ❤️</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  font-family:Arial;
+  overflow:hidden;
+  height:100vh;
+  color:#fff;
+  background:#000;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* START */
+#startScreen{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:radial-gradient(circle,#1a1a1a,#000);
+  text-align:center;
+  padding:20px;
+}
+
+#startBtn{
+  margin-top:20px;
+  padding:16px 45px;
+  font-size:22px;
+  border:none;
+  border-radius:25px;
+  background:#00ffcc;
+  font-weight:bold;
+}
+
+/* GAME */
+.container{
+  display:none;
+  text-align:center;
+  width:100%;
+  max-width:500px;
+  margin:auto;
+  padding:10px;
+}
+
+#round{
+  font-size:22px;
+  color:yellow;
+  text-shadow:0 0 10px red;
+}
+
+/* ARENA */
+#arena{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:15px 0;
+  height:160px;
+}
+
+.char{
+  font-size:70px;
+  animation:breathe 2.5s infinite;
+}
+
+@keyframes breathe{
+  0%{transform:translateY(0)}
+  50%{transform:translateY(-5px)}
+  100%{transform:translateY(0)}
+}
+
+/* HIT */
+.hit{animation:shake .2s;}
+@keyframes shake{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  50%{transform:translateX(5px)}
+  75%{transform:translateX(-5px)}
+  100%{transform:translateX(0)}
+}
+
+/* HP */
+.bar{
+  width:100%;
+  height:10px;
+  background:#333;
+  border-radius:20px;
+  overflow:hidden;
+  margin:5px 0;
+}
+
+.fill{height:100%;transition:.2s;}
+
+#bossHP{background:red;}
+#playerHP{background:#00ff9d;}
+
+/* BUTTON */
+#attackBtn{
+  margin-top:15px;
+  padding:16px 30px;
+  font-size:20px;
+  border:none;
+  border-radius:20px;
+  background:#ff3b3b;
+  color:white;
+  font-weight:bold;
+}
+
+/* EFFECT */
+.effect{
+  position:absolute;
+  font-size:22px;
+  animation:fly .7s forwards;
+}
+
+@keyframes fly{
+  0%{opacity:1;transform:translate(0,0)}
+  100%{opacity:0;transform:translate(80px,-60px)}
+}
+
+/* END */
+#endScreen{
+  position:fixed;
+  inset:0;
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:black;
+  text-align:center;
+  padding:20px;
+}
+
+#nextLink{
+  margin-top:20px;
+  font-size:20px;
+  color:#00ffcc;
+  text-decoration:none;
+}
+
+/* HEARTS */
+.heart{
+  position:absolute;
+  font-size:24px;
+  animation:explode 3s forwards;
+}
+
+@keyframes explode{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.8)}
+}
+
+/* MOBILE */
+@media(max-width:500px){
+  .char{font-size:60px;}
+}
+</style>
+</head>
+
+<body>
+
+<!-- START -->
+<div id="startScreen">
+  <h1>💔 Спаси парня</h1>
+  <button id="startBtn" onclick="startGame()">START ▶</button>
+</div>
+
+<!-- GAME -->
+<div class="container" id="game">
+
+<h2>⚔️ БОЙ</h2>
+<div id="round">ROUND 1</div>
+
+<div id="arena">
+  <div id="monster" class="char">😡</div>
+  <div class="char">👩‍💻</div>
+</div>
+
+<div>
+  <div>HP БОССА</div>
+  <div class="bar"><div id="bossHP" class="fill"></div></div>
+
+  <div>ТВОЁ HP</div>
+  <div class="bar"><div id="playerHP" class="fill"></div></div>
+</div>
+
+<button id="attackBtn" onclick="attack()">⚔️ УДАР</button>
+
+<div id="result"></div>
+
+</div>
+
+<!-- END -->
+<div id="endScreen">
+  <h1 style="color:pink;">❤️ Победа!</h1>
+
+  <a id="nextLink" href="https://canva.link/hluk0y2iq3o4wdp">
+    👉 Переходи дальше 👈
+  </a>
+</div>
+
+<script>
+
+let playerHP = 5000;
+
+let bosses = [
+  {hp:1500,max:1500},
+  {hp:1300,max:1300},
+  {hp:2600,max:2600}
+];
+
+let i = 0;
+
+/* START */
+function startGame(){
+  document.getElementById("startScreen").style.display="none";
+  document.getElementById("game").style.display="block";
+  update();
+  updateRound();
+}
+
+/* ROUND */
+function updateRound(){
+  document.getElementById("round").innerText="ROUND "+(i+1);
+}
+
+/* EFFECT */
+function effect(text){
+  const el=document.createElement("div");
+  el.className="effect";
+  el.innerText=text;
+  document.body.appendChild(el);
+
+  el.style.left=Math.random()*200+"px";
+  el.style.top=Math.random()*200+"px";
+
+  setTimeout(()=>el.remove(),700);
+}
+
+/* ATTACK */
+function attack(){
+
+  let boss=bosses[i];
+
+  boss.hp -= Math.floor(Math.random()*200)+120;
+  playerHP -= Math.floor(Math.random()*120)+50;
+
+  effect("❤️");
+
+  let monster=document.getElementById("monster");
+  monster.classList.add("hit");
+  setTimeout(()=>monster.classList.remove("hit"),200);
+
+  if(playerHP<=0){
+    document.getElementById("result").innerText="💔 Ты проиграл";
+    return;
+  }
+
+  if(boss.hp<=0){
+    i++;
+    if(i>=bosses.length){
+      endGame();
+      return;
+    }
+    updateRound();
+  }
+
+  update();
+}
+
+/* END */
+function endGame(){
+
+  document.getElementById("game").style.display="none";
+  document.getElementById("endScreen").style.display="flex";
+
+  for(let j=0;j<60;j++){
+    const h=document.createElement("div");
+    h.className="heart";
+    h.innerText="❤️";
+
+    h.style.setProperty("--x",(Math.random()*600-300)+"px");
+    h.style.setProperty("--y",(Math.random()*600-300)+"px");
+
+    h.style.left="50%";
+    h.style.top="50%";
+
+    document.getElementById("endScreen").appendChild(h);
+
+    setTimeout(()=>h.remove(),3000);
+  }
+}
+
+/* UPDATE */
+function update(){
+  let boss=bosses[i];
+
+  document.getElementById("bossHP").style.width=(boss.hp/boss.max*100)+"%";
+  document.getElementById("playerHP").style.width=(playerHP/5000*100)+"%";
+}
+
+</script>
+
+</body>
+</html>
